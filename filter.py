@@ -6,7 +6,8 @@ import scipy.signal as sig
 from scipy.io import wavfile
 
 
-HEARTBEAT_BANDWIDTH = 50
+PEAK_HEARTRATE = 2000  # Expected highest heartrate in bpm
+HEARTBEAT_BANDWIDTH = (PEAK_HEARTRATE / 60) * 2
 
 
 def normalize_signal(data):
@@ -23,7 +24,7 @@ def demodulate_signal(data, sample_rate, carrier_rate):
 
     # TODO: Lowpass I and Q
     filt_order = 3
-    filter_width = HEARTBEAT_BANDWIDTH
+    filter_width = carrier_rate
     filter_width_nyq = filter_width / (sample_rate / 2.0)
     butter_sos = sig.butter(filt_order, filter_width_nyq, output='sos')
     signal_i = sig.sosfilt(butter_sos, signal_i)
