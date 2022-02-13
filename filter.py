@@ -6,13 +6,38 @@ import scipy.signal as sig
 from scipy.io import wavfile
 
 
+HEARTBEAT_BANDWIDTH = 50
+
+
 def normalize_signal(data):
     return data / data[np.argmax(data)]
 
 
+def demodulate_signal(data, sample_rate, carrier_rate):
+    # Calculate the I and Q modulated signals
+    timestamps = np.linspace(0, len(data) / sample_rate, len(data), endpoint=False)
+    carrier_i = np.cos(2.0 * np.pi * carrier_rate * timestamps)
+    carrier_q = np.sin(2.0 * np.pi * carrier_rate * timestamps)
+    signal_i = carrier_i * data
+    signal_q = carrier_q * data
+
+    # TODO: Lowpass I and Q
+    filt_order = 3
+    filter_width = HEARTBEAT_BANDWIDTH / 2
+    filter_width_nyq = filter_width / (sample_rate / 2.0)
+    butter_sos = sig.butter(filt_order, filter_width_nyq, output='sos')
+    signal_i = sig.sosfilt(butter_sos, signal_i)
+    signal_q = sig.sosfilt(butter_sos, signal_q)
+
+    # Combine I and Q filtered signals
+    signal = np.sqrt(signal_i ** 2 + signal_q ** 2)
+
+    return signal
+
+
 def extract_am_signal(data, sample_rate):
     filt_order = 3
-    filter_width = 50
+    filter_width = HEARTBEAT_BANDWIDTH
     freq, pwelch_spec = sig.welch(data, sample_rate, scaling='spectrum')
 
     # Extract peak frequency
@@ -30,7 +55,7 @@ def extract_am_signal(data, sample_rate):
     #plt.grid()
     #plt.show()
 
-    return sig.sosfilt(butter_sos, data)
+    return sig.sosfilt(butter_sos, data), peak_freq
 
 
 def data_filter(data, sample_rate):
@@ -38,7 +63,9 @@ def data_filter(data, sample_rate):
     # TODO: Replace above with sophisticated test? Sum both channels?
 
     signal = normalize_signal(signal)
-    signal = extract_am_signal(signal, sample_rate)
+    signal, carrier_rate = extract_am_signal(signal, sample_rate)
+    signal = normalize_signal(signal)
+    signal = demodulate_signal(signal, sample_rate, carrier_rate)
     signal = normalize_signal(signal)
 
     return signal, sample_rate
