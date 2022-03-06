@@ -6,7 +6,7 @@ import scipy.signal as sig
 from scipy.io import wavfile
 
 
-PEAK_HEARTRATE = 2000  # Expected highest heartrate in bpm
+PEAK_HEARTRATE = 1500  # Expected highest heartrate in bpm
 HEARTBEAT_BANDWIDTH = (PEAK_HEARTRATE / 60) * 2
 
 
@@ -59,8 +59,8 @@ def extract_am_signal(data, sample_rate):
     return sig.sosfilt(butter_sos, data), peak_freq
 
 
-def data_filter(data, sample_rate):
-    signal = data[:,0].astype(np.float32) # Take the left channel, discard the unused right
+def data_filter(signal, sample_rate):
+    #signal = data[:,0].astype(np.float32) # Take the left channel, discard the unused right
     # TODO: Replace above with sophisticated test? Sum both channels?
 
     signal = normalize_signal(signal)
@@ -71,6 +71,11 @@ def data_filter(data, sample_rate):
 
     return signal, sample_rate
 
+
+def writeToFile(input_filename,output_filename):
+    sample_rate, data = wavfile.read(input_filename)
+    filtered_data, filtered_rate = data_filter(data, sample_rate)
+    wavfile.write(output_filename, filtered_rate, filtered_data)
 
 def main():
     if len(sys.argv) < 3:
