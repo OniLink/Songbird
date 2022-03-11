@@ -76,6 +76,7 @@ def writeToFile(input_filename,output_filename):
     sample_rate, data = wavfile.read(input_filename)
     filtered_data, filtered_rate = data_filter(data, sample_rate)
     wavfile.write(output_filename, filtered_rate, filtered_data)
+    return filtered_rate, filtered_data
 
 def main():
     if len(sys.argv) < 3:
