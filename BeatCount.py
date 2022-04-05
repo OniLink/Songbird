@@ -44,16 +44,18 @@ def bpm(samplerate,beat,peaks):
 
     while (cnt < (len(peaks)-1)):
         birdbeats_interval = (peaks[cnt+1] - peaks[cnt]) #Calculate distance between beats in # of samples
-        ms_dist = ((birdbeats_interval / samplerate) * 1000.0) #Convert sample distances to ms distances
-        birdbeats_list.append(ms_dist) #Append to list
+        sec_dist = birdbeats_interval / samplerate #Convert sample distances to ms distances
+        birdbeats_list.append(sec_dist) #Append to list
         cnt += 1
 
-    bpm = 60000 / np.mean(birdbeats_list) #60000 ms (1 minute) / average interval of signal
+    bpm = 60 / np.mean(birdbeats_list) # 1 minute / average interval of signal
     print ("Average Heart Beat is: %.01f" %bpm)  #Round off to 1 decimal and print
 
+#this function just converts seconds to samples, but we can tack on more later to make it better if we want
 def calculate_distance(sample_rate, min_xbill_period):
-    return sample_rate * min_xbill_period
+    return sample_rate * min_xbill_period # seconds to samples
 
+#this function looks for the difference between the highest peaks and avg "noise"
 def calculate_prominence(max_sound,avg_sound):
     return max_sound-avg_sound
     
@@ -75,15 +77,15 @@ def main():
         segment = data[start:end]
         
         #smallest seconds between crossbill beats (kinda acts like a lowpass filter)
-        #"magic number" for slider (but we can do sliders for dist/prom if yall want)
+        #"magic number" for slider
         min_xbill_period = .11 
 
-        max_sound = max(segment[:, 0])
-        avg_sound = np.median(segment[:, 0])
+        max_sound = max(segment[:, 0]) #looks at loudest peak in set of peaks
+        avg_sound = np.median(segment[:, 0]) #looks at median of noise
 
-        # try and calculate distance and prominence arguments 
-        distance = calculate_distance(sample_rate, min_xbill_period) #2000
-        prominence = calculate_prominence(max_sound,avg_sound) #8e+08
+        # variable for the sliders if yall want
+        distance = calculate_distance(sample_rate, min_xbill_period) 
+        prominence = calculate_prominence(max_sound,avg_sound) 
 
         #print(distance)
         #print(prominence)
