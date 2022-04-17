@@ -21,6 +21,7 @@ def browsefunc():
     filename = filedialog.askopenfilename(filetypes=(("wav files","*.wav"),("All files","*.*")))
     search_textbox.delete(0, tk.END)
     search_textbox.insert(tk.END, filename)
+    window.focus()
 
 def write():
     global data
