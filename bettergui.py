@@ -47,6 +47,8 @@ def dofilter():
     #input_data = read("deleteme.wav")[1]
 
     #plt.clf()
+    info_listbox.delete(0,tk.END)
+    info_listbox.insert(tk.END,"Calculated X BPM")
     ax.cla()
     ax.plot(data[start:end])
 
