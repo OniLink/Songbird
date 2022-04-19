@@ -17,7 +17,7 @@ window = tk.Tk()
 window.title("Heartbeat GUI")
 
 
-fig, ax = plt.subplots()
+fig, (ax1,ax2) = plt.subplots(1,2)
 
 def toIndex(arr):
     return (3600*arr[0] + 60*arr[1] + arr[2])
@@ -33,16 +33,18 @@ def write():
     global sample_rate
     global otherdata
     sample_rate, data, otherdata = writeToFile(search_textbox.get(), "deleteme.wav")
+    otherdata = data
+    #otherdata = data
     for child in option_frame.winfo_children():
         child.configure(state='normal')
     dofilter()
 
-def beatCount(start, end, min_xbill_period = .11):
+def beatCount(min_xbill_period = .11, prominence_slider=1):
     bpm_arr = []
     total_length = len(otherdata) / float(sample_rate)
     segment_length = 15
-    #start = 0
-    #end = sample_rate * segment_length
+    start = 0
+    end = sample_rate * segment_length
     print(total_length/segment_length)
     print(f"Sample rate: {sample_rate}")
     print(f"Length data: {len(otherdata)}")
@@ -59,6 +61,7 @@ def beatCount(start, end, min_xbill_period = .11):
         # variable for the sliders if yall want
         distance = calculate_distance(sample_rate, min_xbill_period) 
         prominence = calculate_prominence(max_sound,avg_sound) 
+        prominence *= prominence_slider
 
         peaks, beat = peak_count(segment,distance,prominence)
         seg_bpm = bpm(sample_rate,beat,peaks)
@@ -74,9 +77,20 @@ def beatCount(start, end, min_xbill_period = .11):
     avg_bpm = calculate_average_bpm(bpm_arr)
     print ("Average Heart Beat is: %.01f" %avg_bpm)
     info_listbox.insert(tk.END, "Average Heart Beat is: %.01f" %avg_bpm)
-    #display_peaks(peaks,beat,sample_rate,segment_length)
+    display_peaks(peaks,beat,sample_rate,segment_length,ax2)
+
+def display_peaks(peaks,beat,sample_rate,segment_length, ax):
+    t = np.linspace(0., segment_length, beat.shape[0])
+    ax.cla()
+    ax.plot(t,beat)
+
+    ax.plot((peaks/sample_rate), beat[peaks], "x")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Amplitude")
+    #ax.show()
 
 def dofilter():
+    print("rerunning")
     minimum=option_time1.get()
     mins = list(map(int,minimum.split(':')))
     maximum=option_time2.get()
@@ -92,23 +106,23 @@ def dofilter():
 
     #plt.clf()
     info_listbox.delete(0,tk.END)
-    beatCount(start, end, option_slider.get())
+    beatCount(period_slider.get(),prominence_slider.get())
     #info_listbox.insert(tk.END,"Calculated X BPM")
-    ax.cla()
-    ax.plot(data[start:end])
+    ax1.cla()
+    ax1.plot(data[start:end])
 
 
-    labels = np.arange(start/sample_rate,end/sample_rate,(end-start)/(20*sample_rate))
+    labels = np.arange(start/sample_rate,end/sample_rate,(end-start)/(10*sample_rate))
     labels_rounded = [round(num, 1) for num in labels]
     
     vals = [(num*sample_rate - start) for num in labels_rounded]
-    ax.set_xticks(vals)
+    ax1.set_xticks(vals)
     
-    ax.set_xticklabels(labels_rounded)
+    ax1.set_xticklabels(labels_rounded)
     #ticks_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/sample_rate))
     #ax.xaxis.set_major_formatter(ticks_x)
-    ax.set_xlabel('Time (seconds)', fontsize=16)
-    ax.set_ylabel('Signal Strength', fontsize=16)
+    ax1.set_xlabel('Time (seconds)', fontsize=16)
+    ax1.set_ylabel('Signal Strength', fontsize=16)
     
     canvas.draw()
 
@@ -149,13 +163,17 @@ option_label = tk.Label(master = option_frame, text = "Adjust time range: ", jus
 option_time1 = tk.Entry(master = option_frame, textvariable=t1_str)
 option_time2 = tk.Entry(master = option_frame, textvariable=t2_str)
 option_button = tk.Button(text = "Adjust Range", master = option_frame, command = dofilter)
-option_slider = tk.Scale(master = option_frame, from_=0, to_=1, resolution=0.01, orient='horizontal')
-option_slider.set(0.11)
+period_slider = tk.Scale(master = option_frame, from_=0, to_=1, resolution=0.01, orient='horizontal')
+prominence_slider = tk.Scale(master = option_frame, from_=0, to_=1, resolution=0.01, orient='horizontal')
+
+period_slider.set(0.11)
+prominence_slider.set(1)
 
 option_label.pack(side = tk.LEFT)
 option_time1.pack(side = tk.LEFT)
 option_time2.pack(side = tk.LEFT)
-option_slider.pack(side=tk.LEFT, expand=True)
+period_slider.pack(side=tk.LEFT, expand=True)
+prominence_slider.pack(side=tk.LEFT, expand=True)
 option_button.pack(side = tk.LEFT)
 
 for child in option_frame.winfo_children():
