@@ -75,8 +75,9 @@ def data_filter(signal, sample_rate):
 def writeToFile(input_filename,output_filename):
     sample_rate, data = wavfile.read(input_filename)
     filtered_data, filtered_rate = data_filter(data, sample_rate)
+    otherdata, otherrate = extract_am_signal(data, sample_rate)
     wavfile.write(output_filename, filtered_rate, filtered_data)
-    return filtered_rate, filtered_data
+    return filtered_rate, filtered_data, otherdata
 
 def main():
     if len(sys.argv) < 3:
