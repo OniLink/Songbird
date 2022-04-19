@@ -35,12 +35,12 @@ def write():
         child.configure(state='normal')
     dofilter()
 
-def beatCount():
+def beatCount(start, end):
     bpm_arr = []
     total_length = len(otherdata) / float(sample_rate)
     segment_length = 15
-    start = 0
-    end = sample_rate * segment_length
+    #start = 0
+    #end = sample_rate * segment_length
     print(total_length/segment_length)
     print(f"Sample rate: {sample_rate}")
     print(f"Length data: {len(otherdata)}")
@@ -90,7 +90,7 @@ def dofilter():
 
     #plt.clf()
     info_listbox.delete(0,tk.END)
-    beatCount()
+    beatCount(start, end)
     #info_listbox.insert(tk.END,"Calculated X BPM")
     ax.cla()
     ax.plot(data[start:end])
