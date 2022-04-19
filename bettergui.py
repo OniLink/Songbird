@@ -37,7 +37,7 @@ def write():
 
 def beatCount():
     bpm_arr = []
-    total_length = len(data) / float(sample_rate)
+    total_length = len(otherdata) / float(sample_rate)
     segment_length = 15
     start = 0
     end = sample_rate * segment_length
