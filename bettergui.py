@@ -1,12 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-from PIL import ImageTk, Image 
+from PIL import ImageTk, Image
+from matplotlib.ft2font import HORIZONTAL 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import math
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from sympy import true
 from filter import writeToFile
 from BeatCount import *
 
@@ -35,7 +37,7 @@ def write():
         child.configure(state='normal')
     dofilter()
 
-def beatCount(start, end):
+def beatCount(start, end, min_xbill_period = .11):
     bpm_arr = []
     total_length = len(otherdata) / float(sample_rate)
     segment_length = 15
@@ -49,7 +51,7 @@ def beatCount(start, end):
         
         #smallest seconds between crossbill beats (kinda acts like a lowpass filter)
         #"magic number" for slider
-        min_xbill_period = .11
+        #min_xbill_period = .11
 
         max_sound = max(segment[:]) #looks at loudest peak in set of peaks
         avg_sound = np.median(segment[:]) #looks at median of noise
@@ -90,7 +92,7 @@ def dofilter():
 
     #plt.clf()
     info_listbox.delete(0,tk.END)
-    beatCount(start, end)
+    beatCount(start, end, option_slider.get())
     #info_listbox.insert(tk.END,"Calculated X BPM")
     ax.cla()
     ax.plot(data[start:end])
@@ -131,6 +133,7 @@ search_textbox = tk.Entry(master = search_frame, width = 75)
 search_button = tk.Button(text = "Search", master = search_frame, command = browsefunc)
 run_button = tk.Button(text = "Filter", master = search_frame, command = write)
 
+
 search_label.pack(side = tk.LEFT)
 search_textbox.pack(side = tk.LEFT, expand = True)
 search_button.pack(side = tk.LEFT)
@@ -146,10 +149,13 @@ option_label = tk.Label(master = option_frame, text = "Adjust time range: ", jus
 option_time1 = tk.Entry(master = option_frame, textvariable=t1_str)
 option_time2 = tk.Entry(master = option_frame, textvariable=t2_str)
 option_button = tk.Button(text = "Adjust Range", master = option_frame, command = dofilter)
+option_slider = tk.Scale(master = option_frame, from_=0, to_=1, resolution=0.01, orient='horizontal')
+option_slider.set(0.11)
 
 option_label.pack(side = tk.LEFT)
 option_time1.pack(side = tk.LEFT)
 option_time2.pack(side = tk.LEFT)
+option_slider.pack(side=tk.LEFT, expand=True)
 option_button.pack(side = tk.LEFT)
 
 for child in option_frame.winfo_children():
