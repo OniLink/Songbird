@@ -78,8 +78,11 @@ def extract_am_signal(data, sample_rate):
 #   The extracted and demodulated heart signal
 #   The sample rate of the demodulated heart signal
 def data_filter(signal, sample_rate):
-    #signal = data[:,0].astype(np.float32) # Take the left channel, discard the unused right
+    # Downsample to mono if needed
+    if signal.ndim == 2:
+      signal = signal[:,0] # Take the left channel, discard the right
     # TODO: Replace above with sophisticated test? Sum both channels?
+    signal = signal.astype(np.float32)
 
     signal = normalize_signal(signal)
     signal, carrier_rate = extract_am_signal(signal, sample_rate)
