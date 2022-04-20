@@ -9,8 +9,9 @@ import numpy as np
 import math
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from sympy import true
-from filter import writeToFile
-from BeatCount import *
+import heart_filter
+import beat_count
+from scipy.io import wavfile
 
 
 window = tk.Tk()
@@ -32,9 +33,10 @@ def write():
     global data
     global sample_rate
     global otherdata
-    sample_rate, data, otherdata = writeToFile(search_textbox.get(), "deleteme.wav")
+    sample_rate_raw, data_raw = wavfile.read(search_textbox.get())
+    data, sample_rate = heart_filter.data_filter(data_raw, sample_rate_raw)
     otherdata = data
-    #otherdata = data
+    wavfile.write("deleteme.wav", sample_rate, data)
     for child in option_frame.winfo_children():
         child.configure(state='normal')
     dofilter()
@@ -59,12 +61,12 @@ def beatCount(min_xbill_period = .11, prominence_slider=1):
         avg_sound = np.median(segment[:]) #looks at median of noise
 
         # variable for the sliders if yall want
-        distance = calculate_distance(sample_rate, min_xbill_period) 
-        prominence = calculate_prominence(max_sound,avg_sound) 
+        distance = beat_count.calculate_distance(sample_rate, min_xbill_period) 
+        prominence = beat_count.calculate_prominence(max_sound,avg_sound) 
         prominence *= prominence_slider
 
-        peaks, beat = peak_count(segment,distance,prominence)
-        seg_bpm = bpm(sample_rate,beat,peaks)
+        peaks, beat = beat_count.peak_count(segment,distance,prominence)
+        seg_bpm = beat_count.bpm(sample_rate,beat,peaks)
         print(f"bpm: {seg_bpm}")
         info_listbox.insert(tk.END, f"bpm: {seg_bpm}")
         bpm_arr.append(seg_bpm)
@@ -74,7 +76,7 @@ def beatCount(min_xbill_period = .11, prominence_slider=1):
         if(end + sample_rate > len(otherdata)): 
             end = sample_rate
 
-    avg_bpm = calculate_average_bpm(bpm_arr)
+    avg_bpm = beat_count.calculate_average_bpm(bpm_arr)
     print ("Average Heart Beat is: %.01f" %avg_bpm)
     info_listbox.insert(tk.END, "Average Heart Beat is: %.01f" %avg_bpm)
     display_peaks(peaks,beat,sample_rate,segment_length,ax2)
