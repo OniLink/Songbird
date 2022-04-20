@@ -12,30 +12,6 @@ import sys
 #code referenced https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
 #code referenced http://www.paulvangent.com/2016/03/15/analyzing-a-discrete-heart-rate-signal-using-python-part-1/ 
 
-# Function written by Violet, copied over in integration
-def data_filter(data, sample_rate):
-    #data = data[:,0] # Take the left channel, discard the unused right
-    # TODO: Replace above with sophisticated test? Sum both channels?
-    freq, pwelch_spec = sig.welch(data, sample_rate, scaling='spectrum')
-
-    # Select peak frequency and then bandpass filter the signal
-    filt_order = 3
-    filter_width = 0.001
-
-    peak_freq = freq[np.argmax(pwelch_spec)]
-    peak_nyq = peak_freq / (sample_rate / 2.0)
-    butter_sos = sig.butter(filt_order, [(1 - filter_width) * peak_nyq, (1 + filter_width) * peak_nyq], btype='band', output='sos')
-    filtered_signal = sig.sosfilt(butter_sos, data)
-
-    # Plot freq spectrum
-    # plt.semilogy(freq, pwelch_spec)
-    # plt.xlabel('Frequency [Hz]')
-    # plt.ylabel('PSD')
-    # plt.grid()
-    # plt.show()
-
-    return filtered_signal, sample_rate
-
 #This display orange xs where the peaks are 
 def display_peaks(peaks,beat,sample_rate,segment_length):
     t = np.linspace(0., segment_length, beat.shape[0])
