@@ -10,10 +10,22 @@ PEAK_HEARTRATE = 1500  # Expected highest heartrate in bpm
 HEARTBEAT_BANDWIDTH = (PEAK_HEARTRATE / 60) * 2
 
 
+# Normalize the signal to [-1, 1]
+# Params:
+#   data: The signal as a numpy array
+# Returns:
+#   The signal normalized to a range of [-1, 1]
 def normalize_signal(data):
     return data / data[np.argmax(data)]
 
 
+# Demodulate an AM signal
+# Params:
+#   data: The signal as a numpy array
+#   sample_rate: The sample rate of the data (typically 48kHz)
+#   carrier_rate: The frequency of the AM carrier wave
+# Returns:
+#   The signal carried by the AM signal
 def demodulate_signal(data, sample_rate, carrier_rate):
     # Calculate the I and Q modulated signals
     timestamps = np.linspace(0, len(data) / sample_rate, len(data), endpoint=False)
@@ -22,7 +34,6 @@ def demodulate_signal(data, sample_rate, carrier_rate):
     signal_i = carrier_i * data
     signal_q = carrier_q * data
 
-    # TODO: Lowpass I and Q
     filt_order = 3
     filter_width = carrier_rate
     filter_width_nyq = filter_width / (sample_rate / 2.0)
@@ -36,6 +47,13 @@ def demodulate_signal(data, sample_rate, carrier_rate):
     return signal
 
 
+# Extract an AM signal from a noisy audio signal
+# Params:
+#   data: The signal as a numpy array
+#   sample_rate: The sample rate of the data (typically 48kHz)
+# Returns:
+#   The AM-encoded signal
+#   The carrier frequency of the AM signal
 def extract_am_signal(data, sample_rate):
     filt_order = 3
     filter_width = HEARTBEAT_BANDWIDTH
@@ -49,16 +67,16 @@ def extract_am_signal(data, sample_rate):
     # Bandpass just that frequency
     butter_sos = sig.butter(filt_order, [peak_nyq - width_nyq, peak_nyq + width_nyq], btype='band', output='sos')
 
-    # Plot freq spectrum
-    #plt.semilogy(freq, pwelch_spec)
-    #plt.xlabel('Frequency [Hz]')
-    #plt.ylabel('PSD')
-    #plt.grid()
-    #plt.show()
-
     return sig.sosfilt(butter_sos, data), peak_freq
 
 
+# Filter a heart signal from a noisy audio signal
+# Params:
+#   signal: The noisy audio signal
+#   sample_rate: The audio's sample rate (typically 48kHz)
+# Returns:
+#   The extracted and demodulated heart signal
+#   The sample rate of the demodulated heart signal
 def data_filter(signal, sample_rate):
     #signal = data[:,0].astype(np.float32) # Take the left channel, discard the unused right
     # TODO: Replace above with sophisticated test? Sum both channels?
@@ -71,13 +89,6 @@ def data_filter(signal, sample_rate):
 
     return signal, sample_rate
 
-
-def writeToFile(input_filename,output_filename):
-    sample_rate, data = wavfile.read(input_filename)
-    filtered_data, filtered_rate = data_filter(data, sample_rate)
-    otherdata, otherrate = extract_am_signal(data, sample_rate)
-    wavfile.write(output_filename, filtered_rate, filtered_data)
-    return filtered_rate, filtered_data, otherdata
 
 def main():
     if len(sys.argv) < 3:
