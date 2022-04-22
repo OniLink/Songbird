@@ -7,13 +7,19 @@ import matplotlib.pyplot as plt
 import matplotlib
 import math
 import sys
+import heart_filter
 
 #code referenced https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
 #code referenced https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
 #code referenced http://www.paulvangent.com/2016/03/15/analyzing-a-discrete-heart-rate-signal-using-python-part-1/ 
 
-#This display orange xs where the peaks are 
-def display_peaks(peaks,beat,sample_rate,segment_length):
+# Display detected peaks using matplotlib
+# Params:
+#   peaks: The indices of the detected peaks
+#   beat: The heart beat signal
+#   sample_rate: The sample rate of the signal
+#   segment_length: The length of the signal segment to plot
+def display_peaks(peaks, beat, sample_rate, segment_length):
     t = np.linspace(0., segment_length, beat.shape[0])
     plt.plot(t,beat)
 
@@ -23,54 +29,70 @@ def display_peaks(peaks,beat,sample_rate,segment_length):
     plt.ylabel("Amplitude")
     plt.show()
 
-#takes in desired data, distance, prominence
-def peak_count(data,distance,prominence):
-    #left channel
-    beat = data[:] # for clean .wav, add make it data[:, 0]
 
+# Detects the peaks in the heart signal
+# Params:
+#   data: The heart signal
+#   distance: The minimum distance between peaks
+#   prominence: The prominence of a peak above its surroundings
+# Returns:
+#   The indices of the detected peaks
+def peak_count(data, distance, prominence):
     #prominence is the steepness  
-    peaks,_ = find_peaks(beat, distance=distance, prominence=prominence)
+    peaks,_ = find_peaks(data, distance=distance, prominence=prominence)
     np.diff(peaks)
 
     # prominences = peak_prominences(beat, peaks)[0]
     # print(prominences)
 
-    return peaks, beat
+    return peaks
 
 
-#calculates average bpm
-def bpm(samplerate,beat,peaks):
-    birdbeats_list = []
-    cnt = 0
+# Calculate the average bpm of a segment of the heart signal from its detected peaks
+# Params:
+#   sample_rate: The sample rate of the heart signal
+#   segment: The segment of the heart signal
+#   peaks: The indices of the detected peaks
+# Returns:
+#   The average bpm of the heart in the segment.
+def bpm(sample_rate, segment, peaks):
+    beats = len(peaks)
+    duration = len(segment) / sample_rate
+    return 60.0 * beats / duration
 
-    while (cnt < (len(peaks)-1)):
-        birdbeats_interval = (peaks[cnt+1] - peaks[cnt]) #Calculate distance between beats in # of samples
-        sec_dist = birdbeats_interval / samplerate #Convert sample distances to ms distances
-        birdbeats_list.append(sec_dist) #Append to list
-        cnt += 1
 
-    bpm = 60 / np.mean(birdbeats_list) # 1 minute / average interval of signal
-    return bpm
+# Calculate the average bpm from several segments of the heart signal
+# Params:
+#   bpm_array: The array of segment bpms
+# Returns:
+#   The average heartrate
+def calculate_average_bpm(bpm_array):
+    return np.mean(bpm_array)
 
-def calculate_average_bpm(num):
-    sum_num = 0
-    for t in num:
-        sum_num = sum_num + t           
-
-    avg = sum_num / len(num)
-    return avg
 
 #this function just converts seconds to samples, but we can tack on more later to make it better if we want
-def calculate_distance(sample_rate, min_xbill_period):
-    return sample_rate * min_xbill_period # seconds to samples
+# Convert seconds to sample count
+# Params:
+#   sample_rate: The sample rate of the signal
+#   period: The time in seconds
+# Returns:
+#   The distance in samples of a period of time
+def calculate_distance(sample_rate, period):
+    return sample_rate * period
+
 
 #this function looks for the difference between the highest peaks and avg "noise"
-def calculate_prominence(max_sound,avg_sound):
+# Calculates the prominence
+# Params:
+#   max_sound: The maximum amplitude of the signal segment
+#   avg_sound: The average amplitude of the signal segment
+# Returns:
+#   An estimate for the peak prominence
+def calculate_prominence(max_sound, avg_sound):
     return max_sound-avg_sound
-    
-def main():
 
-    # Violets filter data code
+
+def main():
     if len(sys.argv) < 3:
         print("USAGE: %s <input> <output>".format(sys.argv[0]))
         return
@@ -81,33 +103,24 @@ def main():
     print("Grabbed arguments")
 
     sample_rate, data = wavfile.read(input_filename)
-    filtered_data, filtered_rate = data_filter(data, sample_rate)
+    filtered_data, filtered_rate = heart_filter.data_filter(data, sample_rate)
     wavfile.write(output_filename, filtered_rate, filtered_data)
 
     print("Filtered input file")
 
-    # Megan: adding to merge our code
+    # Relabel
     sample_rate = filtered_rate
     data = filtered_data
-
-    # Megan: commented out because above code replaced it
-    # output_filename = 'Sample-Filtered_out_000.wav'
-    # data_dir = pjoin(dirname(__file__), output_filename)
-    # sample_rate, data = wavfile.read(data_dir)
-
-    print("About to segment and output BPM")
 
     # necessary variables for segmenting
     bpm_arr = []
     total_length = len(data) / float(sample_rate)
     segment_length = 15
-    start = 0
-    end = sample_rate * segment_length
     print(total_length/segment_length)
     print(f"Sample rate: {sample_rate}")
     print(f"Length data: {len(data)}")
-    for i in range(0, math.ceil(total_length/segment_length)):
-        segment = data[start:end]
+    for i in range(0, math.floor(total_length/segment_length)):
+        segment = data[i * sample_rate * segment_length : (i+1) * sample_rate * segment_length]
         print(segment)
         
         #smallest seconds between crossbill beats (kinda acts like a lowpass filter)
@@ -122,24 +135,18 @@ def main():
         # variable for the sliders if yall want
         distance = calculate_distance(sample_rate, min_xbill_period) 
         print(distance)
-        prominence = calculate_prominence(max_sound,avg_sound) 
+        prominence = calculate_prominence(max_sound, avg_sound) 
         print(prominence)
 
-        peaks, beat = peak_count(segment,distance,prominence)
-        seg_bpm = bpm(sample_rate,beat,peaks)
+        peaks = peak_count(segment, distance, prominence)
+        seg_bpm = bpm(sample_rate, segment, peaks)
         print(f"bpm: {seg_bpm}")
         bpm_arr.append(seg_bpm)
 
-        start += sample_rate
-        end += sample_rate
-        if(end + sample_rate > len(data)): 
-            end = sample_rate
-
     avg_bpm = calculate_average_bpm(bpm_arr)
     print ("Average Heart Beat is: %.01f" %avg_bpm)
-    display_peaks(peaks,beat,sample_rate,segment_length)
+    display_peaks(peaks, segment, sample_rate, segment_length)
 
-    
 
 if __name__ == "__main__":
     main()

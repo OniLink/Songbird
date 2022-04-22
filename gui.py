@@ -65,8 +65,8 @@ def beatCount(min_xbill_period = .11, prominence_slider=1):
         prominence = beat_count.calculate_prominence(max_sound,avg_sound) 
         prominence *= prominence_slider
 
-        peaks, beat = beat_count.peak_count(segment,distance,prominence)
-        seg_bpm = beat_count.bpm(sample_rate,beat,peaks)
+        peaks = beat_count.peak_count(segment,distance,prominence)
+        seg_bpm = beat_count.bpm(sample_rate, segment, peaks)
         print(f"bpm: {seg_bpm}")
         info_listbox.insert(tk.END, f"bpm: {seg_bpm}")
         bpm_arr.append(seg_bpm)
@@ -79,7 +79,7 @@ def beatCount(min_xbill_period = .11, prominence_slider=1):
     avg_bpm = beat_count.calculate_average_bpm(bpm_arr)
     print ("Average Heart Beat is: %.01f" %avg_bpm)
     info_listbox.insert(tk.END, "Average Heart Beat is: %.01f" %avg_bpm)
-    display_peaks(peaks,beat,sample_rate,segment_length,ax2)
+    display_peaks(peaks,segment,sample_rate,segment_length,ax2)
 
 def display_peaks(peaks,beat,sample_rate,segment_length, ax):
     t = np.linspace(0., segment_length, beat.shape[0])
