@@ -94,8 +94,9 @@ def calculate_prominence(max_sound, avg_sound):
 #   data:
 #   segment_length: length of segments (in seconds) that calculate BPM
 #   min_xbill_period: smallest seconds between crossbill beats (magic-number)
-def peak_count_data(sample_rate, data, segment_length, min_xbill_period):
+def peak_count_data(initial_index, sample_rate, data, segment_length, min_xbill_period, prominence_scale=1):
     bpm_arr = []
+    peaklist = []
     total_length = len(data) / float(sample_rate)
     for i in range(0, math.floor(total_length/segment_length)):
         segment = data[i * sample_rate * segment_length : (i+1) * sample_rate * segment_length]
@@ -105,13 +106,15 @@ def peak_count_data(sample_rate, data, segment_length, min_xbill_period):
 
         # variable for the sliders if yall want
         distance = calculate_distance(sample_rate, min_xbill_period) 
-        prominence = calculate_prominence(max_sound, avg_sound) 
+        prominence = calculate_prominence(max_sound, avg_sound) * prominence_scale
 
         peaks = peak_count(segment, distance, prominence)
+        for p in peaks:
+            peaklist.append((p + (i * sample_rate * segment_length) + initial_index))
         seg_bpm = bpm(sample_rate, segment, peaks)
         print(f"bpm: {seg_bpm}")
         bpm_arr.append(seg_bpm)
-    return calculate_average_bpm(bpm_arr)
+    return calculate_average_bpm(bpm_arr),peaklist
 
 
 def main():
