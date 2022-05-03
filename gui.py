@@ -18,7 +18,8 @@ window = tk.Tk()
 window.title("Heartbeat GUI")
 
 
-fig, (ax1,ax2) = plt.subplots(1,2)
+#fig, (ax1,ax2) = plt.subplots(1,2)
+fig, ax1 = plt.subplots()
 
 def toIndex(arr):
     return (3600*arr[0] + 60*arr[1] + arr[2])
@@ -28,6 +29,9 @@ def browsefunc():
     search_textbox.delete(0, tk.END)
     search_textbox.insert(tk.END, filename)
     window.focus()
+    for child in option_frame.winfo_children():
+        child.configure(state='normal')
+        option_button.configure(state='disabled')
 
 def write():
     global data
@@ -40,7 +44,7 @@ def write():
     for child in option_frame.winfo_children():
         child.configure(state='normal')
     dofilter()
-
+'''
 def beatCount(min_xbill_period = .11, prominence_slider=1):
     bpm_arr = []
     total_length = len(otherdata) / float(sample_rate)
@@ -79,8 +83,8 @@ def beatCount(min_xbill_period = .11, prominence_slider=1):
     avg_bpm = beat_count.calculate_average_bpm(bpm_arr)
     print ("Average Heart Beat is: %.01f" %avg_bpm)
     info_listbox.insert(tk.END, "Average Heart Beat is: %.01f" %avg_bpm)
-    display_peaks(peaks,segment,sample_rate,segment_length,ax2)
-
+    #display_peaks(peaks,segment,sample_rate,segment_length,ax2)
+'''
 def display_peaks(peaks,beat,sample_rate,segment_length, ax):
     t = np.linspace(0., segment_length, beat.shape[0])
     ax.cla()
@@ -88,7 +92,7 @@ def display_peaks(peaks,beat,sample_rate,segment_length, ax):
 
     ax.plot((peaks/sample_rate), beat[peaks], "x")
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Amplitude")
+    ax.set_ylabel("Signal Strength")
     #ax.show()
 
 def dofilter():
@@ -108,10 +112,16 @@ def dofilter():
 
     #plt.clf()
     info_listbox.delete(0,tk.END)
-    beatCount(period_slider.get(),prominence_slider.get())
+    avgbpm,peaks = beat_count.peak_count_data(start, sample_rate,data[start:end],5,period_slider.get(),prominence_slider.get())
     #info_listbox.insert(tk.END,"Calculated X BPM")
+
     ax1.cla()
     ax1.plot(data[start:end])
+
+    peaks = list(map(lambda x: x-start, peaks))
+
+    ax1.plot(peaks, data[start:end][peaks], "x")
+    info_listbox.insert(tk.END, f"bpm: {avgbpm}")
 
 
     labels = np.arange(start/sample_rate,end/sample_rate,(end-start)/(10*sample_rate))
