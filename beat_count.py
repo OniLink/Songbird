@@ -88,12 +88,14 @@ def calculate_prominence(max_sound, avg_sound):
     return max_sound-avg_sound
 
 
+
 #this function is the "main" for peak counting, used for the GUI to call
 # Params:
 #   sample_rate:
 #   data:
 #   segment_length: length of segments (in seconds) that calculate BPM
 #   min_xbill_period: smallest seconds between crossbill beats (magic-number)
+
 def peak_count_data(initial_index, sample_rate, data, segment_length, min_xbill_period, prominence_scale=1):
     bpm_arr = []
     peaklist = []
