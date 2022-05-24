@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-from sympy import true
+#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+#from sympy import true
 import heart_filter
 import beat_count
 from scipy.io import wavfile
@@ -45,7 +46,7 @@ def write():
     sample_rate, data_raw = wavfile.read(search_textbox.get())
 
     data = heart_filter.data_filter(data_raw, sample_rate)
-    wavfile.write("deleteme.wav", sample_rate, data)
+    wavfile.write("filtered_file.wav", sample_rate, data)
     option_button.configure(state='normal')
     dofilter()
 
@@ -90,6 +91,10 @@ def dofilter():
     #input check
     if (start >= end):
         info_listbox.insert(tk.END, "Please check that start time is earlier than end time")
+        return 1
+
+    if (end > len(data) or start < 0):
+        info_listbox.insert(tk.END, "Please check that the selected time range is within the length of the file")
         return 1
 
     info_listbox.delete(0,tk.END)
@@ -152,7 +157,7 @@ run_button.pack(side=tk.LEFT)
 t1_str=tk.StringVar()
 t2_str=tk.StringVar()
 t1_str.set("00:00:00")
-t2_str.set("00:00:22")
+t2_str.set("00:00:05")
 
 option_label = tk.Label(master = option_frame, text = "Time Range (HH:MM:SS): ", justify = tk.LEFT)
 option_time1 = tk.Entry(master = option_frame, textvariable=t1_str)
@@ -171,10 +176,9 @@ option_slider_label2.pack(side=tk.TOP)
 prominence_slider.pack(side=tk.BOTTOM)
 
 option_button = tk.Button(text = "Adjust Range", master = option_frame, command = dofilter)
-#prominence_slider = tk.Scale(master = option_frame, from_=0, to_=1, resolution=0.01, orient='horizontal')
 
-period_slider.set(0.11)
-prominence_slider.set(1)
+period_slider.set(0.09)
+prominence_slider.set(0.96)
 
 option_label.pack(side = tk.LEFT)
 option_time1.pack(side = tk.LEFT)
@@ -199,6 +203,8 @@ scrollbar.pack(side = tk.LEFT, fill = tk.Y)
 info_listbox.config(yscrollcommand = scrollbar.set)
 scrollbar.config(command = info_listbox.yview)
 
+#canvas_width = 500
+#canvas_height = 500
 canvas_width = 500
 canvas_height = 500
 
