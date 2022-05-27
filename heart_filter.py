@@ -6,6 +6,7 @@ import scipy.signal as sig
 from scipy.io import wavfile
 
 
+
 PEAK_HEARTRATE = 1500  # Expected highest heartrate in bpm
 HEARTBEAT_BANDWIDTH = (PEAK_HEARTRATE / 60) * 2
 
@@ -90,7 +91,7 @@ def data_filter(signal, sample_rate):
     signal = demodulate_signal(signal, sample_rate, carrier_rate)
     signal = normalize_signal(signal)
 
-    return signal, sample_rate
+    return signal
 
 
 def main():
@@ -106,5 +107,19 @@ def main():
     wavfile.write(output_filename, filtered_rate, filtered_data)
 
 
+def split_by(sequence, length):
+    iterable = iter(sequence)
+    def yield_length():
+        for i in range(length):
+            try:
+                yield iterable.__next__()
+            except StopIteration:
+                return
+    while True:
+        res = list(yield_length())
+        if not res:
+            return
+        yield res
+        
 if __name__ == "__main__":
     main()
