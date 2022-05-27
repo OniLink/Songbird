@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#from sympy import true
 import heart_filter
 import beat_count
 from scipy.io import wavfile
@@ -16,13 +14,20 @@ import time
 import math
 
 
+#window setup
 window = tk.Tk()
 window.title("Heartbeat GUI")
 
 
-#fig, (ax1,ax2) = plt.subplots(1,2)
+#create plots for canvas
 fig, ax1 = plt.subplots()
 
+
+#checks that input is in H:M:S format
+#Param:
+#   time_string: string obtained from textbox in gui
+#returns:
+#   boolean
 def isHHMMSS(time_string):
     try:
         time.strptime(time_string, "%H:%M:%S")
@@ -30,15 +35,20 @@ def isHHMMSS(time_string):
         return False
     return True
 
+#converts H:M:S format string into seconds
 def toIndex(arr):
     return (3600*arr[0] + 60*arr[1] + arr[2])
 
+#Browse for .wav files
+#inserts selected file into search box
 def browsefunc():
     filename = filedialog.askopenfilename(filetypes=(("wav files","*.wav"),("All files","*.*")))
     search_textbox.delete(0, tk.END)
     search_textbox.insert(tk.END, filename)
     window.focus()
 
+#Process data and save it to global variable
+#Calls dofilter()
 def write():
     global data
     global sample_rate
@@ -50,6 +60,15 @@ def write():
     option_button.configure(state='normal')
     dofilter()
 
+def read():
+    global data
+    global sample_rate
+    sample_rate, data= wavfile.read(search_textbox.get())
+
+    option_button.configure(state='normal')
+    dofilter()
+
+#peak count function based on function in peak_count.py
 def peak_count_data(initial_index, sample_rate, data, segment_length, min_xbill_period, prominence_scale=1):
     bpm_arr = []
     peaklist = []
@@ -68,6 +87,7 @@ def peak_count_data(initial_index, sample_rate, data, segment_length, min_xbill_
         for p in peaks:
             peaklist.append((p + (i * sample_rate * segment_length) + initial_index))
         seg_bpm = beat_count.bpm(sample_rate, segment, peaks)
+        #print output to listbox
         info_listbox.insert(tk.END, f"bpm: {seg_bpm}, [{time.strftime('%H:%M:%S', time.gmtime(int(initial_index/sample_rate + (i * segment_length))))}]")
         bpm_arr.append(seg_bpm)
     return beat_count.calculate_average_bpm(bpm_arr),peaklist
@@ -75,11 +95,11 @@ def peak_count_data(initial_index, sample_rate, data, segment_length, min_xbill_
 def dofilter():
     print("Adjusting filter")
 
-    #get inputs
+    #get inputs from gui
     minimum=option_time1.get()
     maximum=option_time2.get()
 
-    #input check
+    #input check to make sure times are in valid format
     if (not isHHMMSS(minimum) or not isHHMMSS(maximum)):
         info_listbox.insert(tk.END, "\nPlease insert times in hh:mm:ss format\n")
         return 1
@@ -88,11 +108,12 @@ def dofilter():
     start = toIndex(list(map(int,minimum.split(':')))) * sample_rate
     end = toIndex(list(map(int,maximum.split(':')))) * sample_rate
 
-    #input check
+    #input check to make sure start time is after end time
     if (start >= end):
         info_listbox.insert(tk.END, "Please check that start time is earlier than end time")
         return 1
 
+    #input check to make sure start selected times are within the bounds of the file
     if (end > len(data) or start < 0):
         info_listbox.insert(tk.END, "Please check that the selected time range is within the length of the file")
         return 1
@@ -110,6 +131,7 @@ def dofilter():
     info_listbox.insert(tk.END, f"Overall bpm: {avgbpm}")
 
 
+    #do 10 labels if data is has room, otherwise 5
     num_labels = 10 if((end-start)/sample_rate >= 10) else 5
     labels = np.arange(start/sample_rate,end/sample_rate,(end-start)/(num_labels*sample_rate))
     labels_rounded = [round(num, 1) for num in labels]
@@ -127,6 +149,7 @@ def dofilter():
     canvas.draw()
 
 
+#Lots and lots of tkinter setup
 window.bind('<Return>',dofilter)
 
 search_frame = tk.Frame(master = window)
@@ -146,12 +169,14 @@ search_label = tk.Label(master = search_frame, text = "File Search: ", justify =
 search_textbox = tk.Entry(master = search_frame, width = 75)
 search_button = tk.Button(text = "Search", master = search_frame, command = browsefunc)
 run_button = tk.Button(text = "Filter", master = search_frame, command = write)
+read_button = tk.Button(text = "Read", master = search_frame, command = read)
 
 
 search_label.pack(side = tk.LEFT)
 search_textbox.pack(side = tk.LEFT, expand = True)
 search_button.pack(side = tk.LEFT)
 run_button.pack(side=tk.LEFT)
+read_button.pack(side=tk.LEFT)
 
 #option frame
 t1_str=tk.StringVar()
@@ -159,16 +184,19 @@ t2_str=tk.StringVar()
 t1_str.set("00:00:00")
 t2_str.set("00:00:05")
 
+#time input boxes
 option_label = tk.Label(master = option_frame, text = "Time Range (HH:MM:SS): ", justify = tk.LEFT)
 option_time1 = tk.Entry(master = option_frame, textvariable=t1_str)
 option_time2 = tk.Entry(master = option_frame, textvariable=t2_str)
 
+#frame 1 is for our first slider
 option_slider_frame1 = tk.Frame(master = option_frame)
 option_slider_label1 = tk.Label(master = option_slider_frame1, text = "Minimum Period Slider: ", justify = tk.LEFT)
 period_slider = tk.Scale(master = option_slider_frame1, from_=0, to_=1, resolution=0.01, orient='horizontal')
 option_slider_label1.pack(side=tk.TOP)
 period_slider.pack(side=tk.BOTTOM)
 
+#frame 2 is for second slider
 option_slider_frame2 = tk.Frame(master = option_frame)
 option_slider_label2 = tk.Label(master = option_slider_frame2, text = "Prominence Slider: ", justify = tk.LEFT)
 prominence_slider = tk.Scale(master = option_slider_frame2, from_=0, to_=1, resolution=0.01, orient='horizontal')
