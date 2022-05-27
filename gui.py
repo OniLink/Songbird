@@ -191,20 +191,18 @@ option_button.configure(state='disable')
 
 #listbox to display returned info
 info_listbox = tk.Listbox(master = info_frame, width = 125, height = 10)
-info_listbox.pack(side = tk.LEFT, fill = tk.Y)
+info_listbox.pack(side = tk.LEFT, fill = tk.BOTH)
 info_listbox.insert(tk.END, "")
 info_listbox.insert(tk.END, " Count information returned here")
 
 #scrollbar for info listbox
 scrollbar = tk.Scrollbar(master = info_frame)
-scrollbar.pack(side = tk.LEFT, fill = tk.Y)
+scrollbar.pack(side = tk.RIGHT, fill = tk.Y)
 
 #associate scrollbar with info listbox
 info_listbox.config(yscrollcommand = scrollbar.set)
 scrollbar.config(command = info_listbox.yview)
 
-#canvas_width = 500
-#canvas_height = 500
 canvas_width = 500
 canvas_height = 500
 
@@ -212,7 +210,6 @@ canvas_height = 500
 canvas = FigureCanvasTkAgg(fig, master=window)
 
 #Scrollbars for the canvas
-
 hscrollbar = tk.Scrollbar(master = display_frame, orient = tk.HORIZONTAL)
 hscrollbar.pack(side = tk.BOTTOM, fill = tk.X)
 hscrollbar.config(command = canvas.get_tk_widget().xview) 
