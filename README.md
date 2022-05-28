@@ -59,7 +59,5 @@ use a smaller interval of time
 ## Demo Link
 https://www.youtube.com/watch?v=bSxV2Pfvxkk
 ## Unrealized Features:
-- Scrollable Graph
-  *We had planned to add a way for users to scroll through the graph of the data, but we were unable to implement this feature
-- Accounting for Crossbill Double Peaks
-  *Tuning the slider can account for double peaks, but if the slider is tuned for single peaks it will skip past double peaks. There is no specific implementation for double peaks as of now.
+- Scrollable Graph: We had planned to add a way for users to scroll through the graph of the data, but we were unable to implement this feature
+- Accounting for Crossbill Double Peaks: Tuning the slider can account for double peaks, but if the slider is tuned for single peaks it will skip past double peaks. There is no specific implementation for double peaks as of now.
