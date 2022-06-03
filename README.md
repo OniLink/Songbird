@@ -45,7 +45,7 @@ like Audacity if desired.
 ## Sliders
 ### Period:
 This slider adjusts the period where bird heartbeats are captured and will ignore everything in
-between, for adjusting, The max value of the slider makes it capture a larger range of periods at
+between. For adjusting, the max value of the slider makes it capture a larger range of periods at
 the cost of catching more false peaks.
 ### Prominence:
 This slider adjusts what the code looks for in the difference between the highest peak and the
